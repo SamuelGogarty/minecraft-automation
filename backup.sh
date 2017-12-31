@@ -1,16 +1,23 @@
-#!/bin/bash
+#!/usr/local/bin/bash
 
 HOSTNAME=""
 TIMESTAMP=$(date +%y-%m-%d-%H)
 
 runbackup(){
-screen -S minecraft -p 0 -X stuff "`printf "say saving-world\r"`"; #sleep 5
-screen -S minecraft -p 0 -X stuff "`printf "save-all\r"`"; #sleep 5
-screen -S minecraft -p 0 -X stuff "`printf "save-off\r"`"; #sleep 5
-tar cvf /root/minecraft-backups/foo"$TIMESTAMP".tar /root/minecraft/world/
-screen -S minecraft -p 0 -X stuff "`printf "save-on\r"`"; #sleep 5
 
 
+echo "screen -S minecraft -p 0 -X stuff "`printf "say "$MESSAGE"\r"`""
+echo "screen -S minecraft -p 0 -X stuff "\`printf "save-all\r"\`""
+echo "screen -S minecraft -p 0 -X stuff "`printf "save-off\r"`""
+
+echo "tar cvf $LD/"$TIMESTAMP".tar "$LOCAL_DIRECTORY""
+
+echo "screen -S minecraft -p 0 -X stuff "`printf "save-on\r"`""
+
+if  [[ -n $DEST_HOST ]];
+then 
+echo "scp $LD/"$TIMESTAMP".tar kaiser@"$DEST_HOST":/home/kaiser/minecraft-backups"
+fi
 
 }
 usage() {
@@ -18,12 +25,12 @@ cat << EOF
 "$0": What this program does
 
 usage: $0 [OPTIONS]
- -h  Show this message
- -t  test but do not take any action if called alone, take an inventory for each client to the log dir and output some statistics.
+ -h  dest hostfor backup
+ -m  Prints shutdown message in-game
  -s  Take a snapshot of all attached volumes for all detected clients
  -v  Verbose Mode, now with even more output! will list a warning if attached volumes do not have at least X snapshots
- -d  Delete all but X most recent snapshots for each volume listed by above action
- -l  Choose log name
+ -d  Specify local directory
+ -l  Choose LD
  -k  Choose key dir
  -c  Specify which detected accounts you with to run the script against. 
  -a  Specify which avaliablility zones you wish to run the script against.
@@ -38,31 +45,34 @@ exit 1
 
 }
 
+DEFAULT_PATH () {
+MESSAGE=
+LOCAL_DIRECTORY=
+LD=
+
+runbackup
+}
 
 
 
 if [[ -z "$@" ]]; then usage
 fi
 
-while getopts "tl:k:sd:hvc:a:e:" OPTION
+while getopts "m:k:s:d:h:c:a:e:l:" OPTION
 do
         case $OPTION in
-                t ) test=true;;
-                l ) LOG="$OPTARG" ;;
-                k ) KEYDIR="$OPTARG" ;;
-                s ) snapshot=true ;;
-                d ) numbertokeep="$OPTARG"
-                del=true 
-                ;;
-                v) verbose=true;;
-                c ) client="$OPTARG";;
-                a ) azones="$OPTARG";;
+               
+                m ) MESSAGE="$OPTARG" ;;
+		k ) DEFAULT_PATH ;;
+                d ) LOCAL_DIRECTORY="$OPTARG" ;;
+                s ) SOURCE_DIRECTORY="$OPTARG" ;;
+                h ) DEST_HOST="$OPTARG";;
+                l ) LD="$OPTARG";;
                 e ) excludelist="$OPTARG";;
-                h ) usage; exit;;
                 \? ) echo "Unknown option: -$OPTARG" >&2; exit 1;;
         esac
 done
 
 runbackup
 
-scp /root/minecraft-backups/foo"$TIMESTAMP".tar kaiser@192.168.0.205:/home/kaiser/minecraft-backups
+

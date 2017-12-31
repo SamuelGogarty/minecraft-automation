@@ -4,6 +4,11 @@
   hosts: localhost
   user: root
   tasks:
+    - user: minecraft
+      shell: /usr/bin/bash
+      group: minecraft
+      append: yes
+
     - name: Install jdk
       apt: pkg=default-jdk state=installed update_cache=true
 
@@ -11,12 +16,12 @@
       apt: pkg=screen state=installed update_cache=true
 
     - name: Create minecraft dir
-      file: state=directory path=/root/minecraft
+      file: state=directory path=/minecraft/minecraft
 
     - name: agree to eula
       shell: echo "eula=true" > /root/minecraft/eula.txt creates=/root/minecraft/eula.txt
 
-    - name: Download minecraft (1.7.4)
+    - name: Download minecraft (1.12.2)
       command: wget -O minecraft_server.jar https://s3.amazonaws.com/Minecraft.Download/versions/1.12.2/minecraft_server.1.12.2.jar chdir=/root/minecraft creates=/root/minecraft/minecraft_server.jar
 
     - name: Run minecraft
